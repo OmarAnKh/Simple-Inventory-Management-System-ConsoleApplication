@@ -8,8 +8,7 @@ namespace AirportTicketBookingExercise
         private static void Main()
         {
             Products products = Products.GetInstance();
-
-            Console.WriteLine(products.AddProduct("Choocola", 20, 2));
+            products.Print();
         }
     }
 }
