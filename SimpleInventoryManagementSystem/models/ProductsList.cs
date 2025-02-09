@@ -5,6 +5,7 @@ public interface IProductsPersistence
     List<Product?> GetProducts();
     bool EditProduct(Product product);
     bool AddProduct(Product? product); 
+    bool DeleteProduct(string product);
     
 }
 
@@ -80,6 +81,42 @@ public class ProductsFilePersistence : IProductsPersistence
             return false;
         }
     }
+
+    public bool DeleteProduct(string product)
+    {
+        try
+        {
+            var lines = File.ReadAllLines("../../../Files/products.txt").ToList();
+            var productFound = false;
+
+            for (int i = 0; i < lines.Count; i++)
+            {
+                string[] data = lines[i].Split(',');
+
+                if (data[0] == product)
+                {
+                    lines.RemoveAt(i);
+                    productFound = true;
+                    break;
+                }
+            }
+
+            if (productFound)
+            {
+                File.WriteAllLines("../../../Files/products.txt", lines);
+                return true;
+            }
+
+            return false;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Error: {e.Message}");
+            return false;
+        }
+    }
+
+
     public List<Product?> GetProducts()
     {
         List<Product?> products = new List<Product?>();
@@ -162,14 +199,30 @@ public class Products
     {
         if (_productsFilePersistence.EditProduct(new Product(productName, productQuantity, productPrice)))
         {
-            var prod= _productsList.FirstOrDefault(p => p?.Name == productName);
-            if (prod == null) return false;
-            prod.Quantity = productQuantity;
-            prod.Price = productPrice;
-            
+            _productsList
+                .Where(p => p?.Name == productName)
+                .ToList()
+                .ForEach(p => 
+                {
+                    p.Quantity = productQuantity;
+                    p.Price = productPrice;
+                });
+            return true;
         }
 
         return true;
+    }
+
+    public bool DeleteProduct(string productName)
+    {
+        if (_productsFilePersistence.DeleteProduct(productName))
+        {
+            Product product = _productsList.FirstOrDefault(p => p?.Name == productName);
+            _productsList.Remove(product);
+            return true;
+        }
+
+        return false;
     }
 
 }
