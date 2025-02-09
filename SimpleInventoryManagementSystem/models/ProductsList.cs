@@ -6,6 +6,11 @@ public interface IProductsPersistence
     bool AddProduct(Product product); 
     
 }
+
+public interface IProductsPrint
+{
+    void Print(List<Product> products);
+}
 public interface IProductsListManager
 {
     bool AddProduct(Product product);
@@ -19,6 +24,7 @@ public class ProductsListManager : IProductsListManager
         throw new NotImplementedException();
     }
 }
+
 
 public class ProductsFilePersistence : IProductsPersistence
 {
@@ -64,16 +70,31 @@ public class ProductsFilePersistence : IProductsPersistence
         return products;
     }
 }
+
+public class PrintProducts : IProductsPrint
+{
+    public void Print(List<Product> products)
+    {
+        foreach (var prod in products)
+        {
+            Console.WriteLine($"Product name:{prod.Name}, Quantity:{prod.Quantity}, Price:{prod.Price}" );
+        }
+    }
+}
+
+
 public class Products
 {
     private static readonly object _lock = new object();
     private static  Products _products;
     private readonly List<Product> _productsList;
     private readonly IProductsPersistence _productsFilePersistence;
+    private readonly IProductsPrint _productsPrint;
     private Products()
     {
         _productsFilePersistence = new ProductsFilePersistence();
         _productsList = _productsFilePersistence.GetProducts();    
+        _productsPrint=new PrintProducts();
     }
 
     public static Products GetInstance()
@@ -98,5 +119,14 @@ public class Products
         return false;
 
     }
-    
+
+    public void Print(List<Product>? products = null)
+    {
+        if (products != null)
+        {
+            _productsPrint.Print(products);
+        }
+        _productsPrint.Print(_productsList);
+    }
+
 }
