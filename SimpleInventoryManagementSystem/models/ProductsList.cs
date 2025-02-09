@@ -3,8 +3,9 @@ namespace SimpleInventoryManagementSystem.models;
 public interface IProductsPersistence
 {
     List<Product?> GetProducts();
-    bool EditProduct(Product product);
+    bool EditProduct(Product product,string newProductName);
     bool AddProduct(Product? product); 
+    bool DeleteProduct(string product);
     
 }
 
@@ -18,18 +19,10 @@ public interface IProductsListManager
 }
 
 
-public class ProductsListManager : IProductsListManager
-{
-    public bool AddProduct(Product product)
-    {
-        throw new NotImplementedException();
-    }
-}
-
 
 public class ProductsFilePersistence : IProductsPersistence
 {
-    public bool EditProduct(Product product)
+    public bool EditProduct(Product product,string newProductName)
     {
         try
         {
@@ -41,6 +34,7 @@ public class ProductsFilePersistence : IProductsPersistence
 
                 if (data[0] == product.Name)
                 {
+                    data[0] = newProductName;
                     data[1] = product.Price.ToString();
                     data[2] = product.Quantity.ToString();
 
@@ -80,6 +74,42 @@ public class ProductsFilePersistence : IProductsPersistence
             return false;
         }
     }
+
+    public bool DeleteProduct(string product)
+    {
+        try
+        {
+            var lines = File.ReadAllLines("../../../Files/products.txt").ToList();
+            var productFound = false;
+
+            for (int i = 0; i < lines.Count; i++)
+            {
+                string[] data = lines[i].Split(',');
+
+                if (data[0] == product)
+                {
+                    lines.RemoveAt(i);
+                    productFound = true;
+                    break;
+                }
+            }
+
+            if (productFound)
+            {
+                File.WriteAllLines("../../../Files/products.txt", lines);
+                return true;
+            }
+
+            return false;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Error: {e.Message}");
+            return false;
+        }
+    }
+
+
     public List<Product?> GetProducts()
     {
         List<Product?> products = new List<Product?>();
@@ -158,18 +188,47 @@ public class Products
         _productsPrint.Print(_productsList);
     }
 
-    public bool EditProduct(string productName, int productQuantity, int productPrice)
+    public bool EditProduct(string productName,string newProductName, int productQuantity, int productPrice)
     {
-        if (_productsFilePersistence.EditProduct(new Product(productName, productQuantity, productPrice)))
+        if (_productsFilePersistence.EditProduct(new Product(productName, productQuantity, productPrice),newProductName))
         {
-            var prod= _productsList.FirstOrDefault(p => p?.Name == productName);
-            if (prod == null) return false;
-            prod.Quantity = productQuantity;
-            prod.Price = productPrice;
-            
+            _productsList
+                .Where(p => p?.Name == productName)
+                .ToList()
+                .ForEach(p =>
+                {
+                    p.Name = newProductName;
+                    p.Quantity = productQuantity;
+                    p.Price = productPrice;
+                });
+            return true;
         }
 
         return true;
+    }
+
+    public bool DeleteProduct(string productName)
+    {
+        if (_productsFilePersistence.DeleteProduct(productName))
+        {
+            Product product = _productsList.FirstOrDefault(p => p?.Name == productName);
+            _productsList.Remove(product);
+            return true;
+        }
+
+        return false;
+    }
+
+    public void Search(string searchTerm)
+    {
+        var products = _productsList.FirstOrDefault(p=>p.Name.Contains(searchTerm));
+        if (products != null)
+        {
+            Console.WriteLine($"Product name:{products.Name}, Quantity:{products.Quantity}, Price:{products.Price}");
+            return;
+        }
+
+        Console.WriteLine("Product not found");
     }
 
 }
