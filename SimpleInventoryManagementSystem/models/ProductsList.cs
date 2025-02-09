@@ -3,7 +3,7 @@ namespace SimpleInventoryManagementSystem.models;
 public interface IProductsPersistence
 {
     List<Product?> GetProducts();
-    bool EditProduct(Product product);
+    bool EditProduct(Product product,string newProductName);
     bool AddProduct(Product? product); 
     bool DeleteProduct(string product);
     
@@ -19,18 +19,10 @@ public interface IProductsListManager
 }
 
 
-public class ProductsListManager : IProductsListManager
-{
-    public bool AddProduct(Product product)
-    {
-        throw new NotImplementedException();
-    }
-}
-
 
 public class ProductsFilePersistence : IProductsPersistence
 {
-    public bool EditProduct(Product product)
+    public bool EditProduct(Product product,string newProductName)
     {
         try
         {
@@ -42,6 +34,7 @@ public class ProductsFilePersistence : IProductsPersistence
 
                 if (data[0] == product.Name)
                 {
+                    data[0] = newProductName;
                     data[1] = product.Price.ToString();
                     data[2] = product.Quantity.ToString();
 
@@ -195,15 +188,16 @@ public class Products
         _productsPrint.Print(_productsList);
     }
 
-    public bool EditProduct(string productName, int productQuantity, int productPrice)
+    public bool EditProduct(string productName,string newProductName, int productQuantity, int productPrice)
     {
-        if (_productsFilePersistence.EditProduct(new Product(productName, productQuantity, productPrice)))
+        if (_productsFilePersistence.EditProduct(new Product(productName, productQuantity, productPrice),newProductName))
         {
             _productsList
                 .Where(p => p?.Name == productName)
                 .ToList()
-                .ForEach(p => 
+                .ForEach(p =>
                 {
+                    p.Name = newProductName;
                     p.Quantity = productQuantity;
                     p.Price = productPrice;
                 });
@@ -223,6 +217,18 @@ public class Products
         }
 
         return false;
+    }
+
+    public void Search(string searchTerm)
+    {
+        var products = _productsList.FirstOrDefault(p=>p.Name.Contains(searchTerm));
+        if (products != null)
+        {
+            Console.WriteLine($"Product name:{products.Name}, Quantity:{products.Quantity}, Price:{products.Price}");
+            return;
+        }
+
+        Console.WriteLine("Product not found");
     }
 
 }

@@ -8,8 +8,9 @@ namespace SimpleInventoryManagementSystem
         private static void Main()
         {
             Products? products = Products.GetInstance();
-            products.DeleteProduct("Cooc");
-            products.Print();
+            products.Search("Choocola");
+            products.EditProduct("Choocola","d",10,2);
+            products.Search("Choocola");
         }
     }
 }

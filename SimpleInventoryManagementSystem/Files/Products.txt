@@ -1,2 +1,2 @@
 chips,20,5
-Choocola,20,2
+d,2,10
