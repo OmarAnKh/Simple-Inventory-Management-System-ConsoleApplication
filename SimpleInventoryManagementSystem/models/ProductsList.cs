@@ -2,14 +2,15 @@ namespace SimpleInventoryManagementSystem.models;
 
 public interface IProductsPersistence
 {
-    List<Product> GetProducts();
-    bool AddProduct(Product product); 
+    List<Product?> GetProducts();
+    bool EditProduct(Product product);
+    bool AddProduct(Product? product); 
     
 }
 
 public interface IProductsPrint
 {
-    void Print(List<Product> products);
+    void Print(List<Product?> products);
 }
 public interface IProductsListManager
 {
@@ -28,7 +29,39 @@ public class ProductsListManager : IProductsListManager
 
 public class ProductsFilePersistence : IProductsPersistence
 {
-    public bool AddProduct(Product product)
+    public bool EditProduct(Product product)
+    {
+        try
+        {
+            var lines = File.ReadAllLines("../../../Files/products.txt").ToList();
+
+            for (int i = 0; i < lines.Count; i++)
+            {
+                string[] data = lines[i].Split(',');
+
+                if (data[0] == product.Name)
+                {
+                    data[1] = product.Price.ToString();
+                    data[2] = product.Quantity.ToString();
+
+                    lines[i] = string.Join(",", data);
+                    break; 
+                }
+            }
+
+            File.WriteAllLines("../../../Files/products.txt", lines);
+
+            return true;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            return false; 
+        }
+    }
+
+
+    public bool AddProduct(Product? product)
     {
         try
         {
@@ -47,9 +80,9 @@ public class ProductsFilePersistence : IProductsPersistence
             return false;
         }
     }
-    public List<Product> GetProducts()
+    public List<Product?> GetProducts()
     {
-        List<Product> products = new List<Product>();
+        List<Product?> products = new List<Product?>();
         try
         {
             StreamReader sr = new StreamReader("../../../Files/products.txt");
@@ -73,7 +106,7 @@ public class ProductsFilePersistence : IProductsPersistence
 
 public class PrintProducts : IProductsPrint
 {
-    public void Print(List<Product> products)
+    public void Print(List<Product?> products)
     {
         foreach (var prod in products)
         {
@@ -85,9 +118,9 @@ public class PrintProducts : IProductsPrint
 
 public class Products
 {
-    private static readonly object _lock = new object();
-    private static  Products _products;
-    private readonly List<Product> _productsList;
+    private static readonly Lock Lock = new Lock();
+    private static  Products? _products;
+    private readonly List<Product?> _productsList;
     private readonly IProductsPersistence _productsFilePersistence;
     private readonly IProductsPrint _productsPrint;
     private Products()
@@ -97,9 +130,9 @@ public class Products
         _productsPrint=new PrintProducts();
     }
 
-    public static Products GetInstance()
+    public static Products? GetInstance()
     {
-        lock (_lock)
+        lock (Lock)
         {
             _products ??= new Products();
         }
@@ -109,24 +142,34 @@ public class Products
 
     public bool AddProduct(string productName, int productQuantity, int productPrice)
     {
-        Product product = new Product(productName, productQuantity, productPrice);
-        if (_productsFilePersistence.AddProduct(product))
-        {
-            _productsList.Add(product);
-            return true;
-        }
-
-        return false;
+        var product = new Product(productName, productQuantity, productPrice);
+        if (!_productsFilePersistence.AddProduct(product)) return false;
+        _productsList.Add(product);
+        return true;
 
     }
 
-    public void Print(List<Product>? products = null)
+    public void Print(List<Product?>? products = null)
     {
         if (products != null)
         {
             _productsPrint.Print(products);
         }
         _productsPrint.Print(_productsList);
+    }
+
+    public bool EditProduct(string productName, int productQuantity, int productPrice)
+    {
+        if (_productsFilePersistence.EditProduct(new Product(productName, productQuantity, productPrice)))
+        {
+            var prod= _productsList.FirstOrDefault(p => p?.Name == productName);
+            if (prod == null) return false;
+            prod.Quantity = productQuantity;
+            prod.Price = productPrice;
+            
+        }
+
+        return true;
     }
 
 }
