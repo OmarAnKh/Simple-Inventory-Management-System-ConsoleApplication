@@ -1,3 +1,15 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿using System;
+using SimpleInventoryManagementSystem.models;
 
-Console.WriteLine("Hello, World!");
+namespace AirportTicketBookingExercise
+{
+    static class Program
+    {
+        private static void Main()
+        {
+            Products products = Products.GetInstance();
+
+            Console.WriteLine(products.AddProduct("Choocola", 20, 2));
+        }
+    }
+}
