@@ -3,7 +3,7 @@ namespace SimpleInventoryManagementSystem.models;
 public interface IProductsPersistence
 {
     List<Product?> GetProducts();
-    bool EditProduct(Product product,string newProductName);
+    bool EditProduct(Product product,string? newProductName);
     bool AddProduct(Product? product); 
     bool DeleteProduct(string product);
     
@@ -22,7 +22,7 @@ public interface IProductsListManager
 
 public class ProductsFilePersistence : IProductsPersistence
 {
-    public bool EditProduct(Product product,string newProductName)
+    public bool EditProduct(Product product,string? newProductName)
     {
         try
         {
@@ -30,7 +30,7 @@ public class ProductsFilePersistence : IProductsPersistence
 
             for (int i = 0; i < lines.Count; i++)
             {
-                string[] data = lines[i].Split(',');
+                string?[] data = lines[i].Split(',');
 
                 if (data[0] == product.Name)
                 {
@@ -119,7 +119,7 @@ public class ProductsFilePersistence : IProductsPersistence
             string? line= sr.ReadLine();
             while (line!=null)
             {
-                string[] product=line.Split(",");
+                string?[] product=line.Split(",");
                 products.Add(new Product(product[0],Int32.Parse(product[1]),Int32.Parse(product[2])));
                 line = sr.ReadLine();
             }
@@ -146,31 +146,31 @@ public class PrintProducts : IProductsPrint
 }
 
 
-public class Products
+public class Inventory
 {
     private static readonly Lock Lock = new Lock();
-    private static  Products? _products;
+    private static  Inventory? _products;
     private readonly List<Product?> _productsList;
     private readonly IProductsPersistence _productsFilePersistence;
     private readonly IProductsPrint _productsPrint;
-    private Products()
+    private Inventory()
     {
         _productsFilePersistence = new ProductsFilePersistence();
         _productsList = _productsFilePersistence.GetProducts();    
         _productsPrint=new PrintProducts();
     }
 
-    public static Products? GetInstance()
+    public static Inventory? GetInstance()
     {
         lock (Lock)
         {
-            _products ??= new Products();
+            _products ??= new Inventory();
         }
 
         return _products;
     }
 
-    public bool AddProduct(string productName, int productQuantity, int productPrice)
+    public bool AddProduct(string? productName, int productQuantity, int productPrice)
     {
         var product = new Product(productName, productQuantity, productPrice);
         if (!_productsFilePersistence.AddProduct(product)) return false;
@@ -188,7 +188,7 @@ public class Products
         _productsPrint.Print(_productsList);
     }
 
-    public bool EditProduct(string productName,string newProductName, int productQuantity, int productPrice)
+    public bool EditProduct(string? productName,string? newProductName, int productQuantity, int productPrice)
     {
         if (_productsFilePersistence.EditProduct(new Product(productName, productQuantity, productPrice),newProductName))
         {
