@@ -1,3 +1,5 @@
+using SimpleInventoryManagementSystem.Attributes;
+
 namespace SimpleInventoryManagementSystem.models;
 public class Inventory
 {
@@ -28,7 +30,7 @@ public class Inventory
     public bool AddProduct(string name, int quantity, int price)
     {
         var product = new Product(name, quantity, price);
-
+        ProductValidator(product);
         if (!_productWriter.AddProduct(product))
         {
             return false;
@@ -86,5 +88,22 @@ public class Inventory
         {
             Console.WriteLine("Product not found.");
         }
+    }
+
+    private bool ProductValidator(Product product)
+    {
+        var type = product.GetType();
+        var properties = type.GetProperties();
+        foreach (var property in properties)
+        {
+            var priceValidatorAttribute=(PriceValidationAttribute)Attribute.GetCustomAttribute(property, typeof(PriceValidationAttribute))!;
+            var value = property.GetValue(product);
+            if ( value is decimal and < 0)
+            {
+                Console.WriteLine("Price must be greater than zero.");
+                return false;
+            }
+        }
+        return true;
     }
 }

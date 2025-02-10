@@ -2,7 +2,7 @@ namespace SimpleInventoryManagementSystem.models;
 
 public class ProductsFilePersistence : IProductReader, IProductWriter
 {
-    private readonly string _filePath = "../../../Files/products.txt";
+    private readonly string _filePath = "../../../Data/products.txt";
 
     public List<Product> GetProducts()
     {
