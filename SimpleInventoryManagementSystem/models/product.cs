@@ -1,14 +1,6 @@
 namespace SimpleInventoryManagementSystem.models;
 
-public interface IProduct
-{
-    string? Name { get; set; }
-    int Quantity { get; set; }
-    int Price { get; set; }
-    
-}
-
-public class Product(string? name, int quantity, int price) : IProduct
+public class Product(string? name, int quantity, int price)
 {
     public string? Name { get; set; } = name;
     public int Quantity { get; set; } = quantity;
