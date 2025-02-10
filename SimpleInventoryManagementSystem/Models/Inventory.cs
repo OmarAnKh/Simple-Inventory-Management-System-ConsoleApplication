@@ -30,14 +30,18 @@ public class Inventory
     public bool AddProduct(string name, int quantity, int price)
     {
         var product = new Product(name, quantity, price);
-        ProductValidator(product);
+        if (!ProductValidator(product))
+        {
+            return false;
+        }
         if (!_productWriter.AddProduct(product))
         {
             return false;
         }
-
         _productsList.Add(product);
         return true;
+
+
     }
 
     public bool EditProduct(string oldName, string newName, int quantity, int price)
@@ -97,11 +101,25 @@ public class Inventory
         foreach (var property in properties)
         {
             var priceValidatorAttribute=(PriceValidationAttribute)Attribute.GetCustomAttribute(property, typeof(PriceValidationAttribute))!;
-            var value = property.GetValue(product);
-            if ( value is decimal and < 0)
+            if(priceValidatorAttribute != null)
             {
-                Console.WriteLine("Price must be greater than zero.");
-                return false;
+                var value = property.GetValue(product);
+                if (value is decimal and < 0)
+                {
+                    Console.WriteLine(priceValidatorAttribute.Message);
+                    return false;
+                }
+            }
+            
+            var quantityValidatorAttribute = (QuantityValidationAttribute)Attribute.GetCustomAttribute(property, typeof(QuantityValidationAttribute))!;
+            if (quantityValidatorAttribute != null)
+            {
+                var value = property.GetValue(product);
+                if (value is int and <= 0)
+                {
+                    Console.WriteLine(quantityValidatorAttribute.Message);
+                    return false;
+                }
             }
         }
         return true;
