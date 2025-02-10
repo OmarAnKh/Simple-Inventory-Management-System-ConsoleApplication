@@ -1,102 +1,83 @@
 namespace SimpleInventoryManagementSystem.models;
 
-public interface IProductsPersistence
+public interface IProductReader
 {
-    List<Product?> GetProducts();
-    bool EditProduct(Product product,string? newProductName);
-    bool AddProduct(Product? product); 
-    bool DeleteProduct(string product);
-    
+    List<Product> GetProducts();
 }
 
-public interface IProductsPrint
-{
-    void Print(List<Product?> products);
-}
-public interface IProductsListManager
+public interface IProductWriter
 {
     bool AddProduct(Product product);
+    bool EditProduct(string oldProductName, Product updatedProduct);
+    bool DeleteProduct(string productName);
+}
+
+public interface IProductPrint
+{
+    void Print(List<Product> products);
 }
 
 
-
-public class ProductsFilePersistence : IProductsPersistence
+public class ProductsFilePersistence : IProductReader, IProductWriter
 {
-    public bool EditProduct(Product product,string? newProductName)
+    private readonly string _filePath = "../../../Files/products.txt";
+
+    public List<Product> GetProducts()
+    {
+        List<Product> products = new List<Product>();
+
+        try
+        {
+            foreach (var line in File.ReadAllLines(_filePath))
+            {
+                var data = line.Split(",");
+                products.Add(new Product(data[0], int.Parse(data[1]), int.Parse(data[2])));
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Error reading products: {e.Message}");
+        }
+
+        return products;
+    }
+
+    public bool AddProduct(Product product)
     {
         try
         {
-            var lines = File.ReadAllLines("../../../Files/products.txt").ToList();
-
-            for (int i = 0; i < lines.Count; i++)
-            {
-                string?[] data = lines[i].Split(',');
-
-                if (data[0] == product.Name)
-                {
-                    data[0] = newProductName;
-                    data[1] = product.Price.ToString();
-                    data[2] = product.Quantity.ToString();
-
-                    lines[i] = string.Join(",", data);
-                    break; 
-                }
-            }
-
-            File.WriteAllLines("../../../Files/products.txt", lines);
-
+            File.AppendAllText(_filePath, $"{product.Name},{product.Quantity},{product.Price}\n");
             return true;
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
-            return false; 
-        }
-    }
-
-
-    public bool AddProduct(Product? product)
-    {
-        try
-        {
-            string filePath = "../../../Files/products.txt"; 
-
-            using (StreamWriter writer = new StreamWriter(filePath, append: true))
-            {
-                writer.WriteLine($"{product.Name},{product.Quantity},{product.Price}"); 
-            }
-
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error: {ex.Message}");
+            Console.WriteLine($"Error adding product: {e.Message}");
             return false;
         }
     }
 
-    public bool DeleteProduct(string product)
+    public bool EditProduct(string oldProductName, Product updatedProduct)
     {
         try
         {
-            var lines = File.ReadAllLines("../../../Files/products.txt").ToList();
-            var productFound = false;
+            var lines = File.ReadAllLines(_filePath).ToList();
+            bool updated = false;
 
             for (int i = 0; i < lines.Count; i++)
             {
-                string[] data = lines[i].Split(',');
+                var data = lines[i].Split(",");
 
-                if (data[0] == product)
+                if (data[0] == oldProductName)
                 {
-                    lines.RemoveAt(i);
-                    productFound = true;
+                    lines[i] = $"{updatedProduct.Name},{updatedProduct.Quantity},{updatedProduct.Price}";
+                    updated = true;
                     break;
                 }
             }
 
-            if (productFound)
+            if (updated)
             {
-                File.WriteAllLines("../../../Files/products.txt", lines);
+                File.WriteAllLines(_filePath, lines);
                 return true;
             }
 
@@ -104,104 +85,107 @@ public class ProductsFilePersistence : IProductsPersistence
         }
         catch (Exception e)
         {
-            Console.WriteLine($"Error: {e.Message}");
+            Console.WriteLine($"Error editing product: {e.Message}");
             return false;
         }
     }
 
-
-    public List<Product?> GetProducts()
+    public bool DeleteProduct(string productName)
     {
-        List<Product?> products = new List<Product?>();
         try
         {
-            StreamReader sr = new StreamReader("../../../Files/products.txt");
-            string? line= sr.ReadLine();
-            while (line!=null)
-            {
-                string?[] product=line.Split(",");
-                products.Add(new Product(product[0],Int32.Parse(product[1]),Int32.Parse(product[2])));
-                line = sr.ReadLine();
-            }
-            sr.Close();
+            var lines = File.ReadAllLines(_filePath).ToList();
+            var newLines = lines.Where(line => !line.StartsWith(productName + ",")).ToList();
+
+            if (lines.Count == newLines.Count) return false;
+
+            File.WriteAllLines(_filePath, newLines);
+            return true;
         }
         catch (Exception e)
         {
-            Console.WriteLine($"Couldn't Read from the file: {e.Message}");
-            System.Environment.Exit(1);
+            Console.WriteLine($"Error deleting product: {e.Message}");
+            return false;
         }
-        return products;
     }
 }
 
-public class PrintProducts : IProductsPrint
+
+public static class ProductPersistenceFactory
 {
-    public void Print(List<Product?> products)
+    public static IProductReader CreateReader()
+    {
+        return new ProductsFilePersistence();
+    }
+
+    public static IProductWriter CreateWriter()
+    {
+        return new ProductsFilePersistence();
+    }
+}
+
+public class PrintProducts : IProductPrint
+{
+    public void Print(List<Product> products)
     {
         foreach (var prod in products)
         {
-            Console.WriteLine($"Product name:{prod.Name}, Quantity:{prod.Quantity}, Price:{prod.Price}" );
+            Console.WriteLine($"Product name: {prod.Name}, Quantity: {prod.Quantity}, Price: {prod.Price}");
         }
     }
 }
+
+
 
 
 public class Inventory
 {
-    private static readonly Lock Lock = new Lock();
-    private static  Inventory? _products;
-    private readonly List<Product?> _productsList;
-    private readonly IProductsPersistence _productsFilePersistence;
-    private readonly IProductsPrint _productsPrint;
+    private static readonly object _lock = new object();
+    private static Inventory? _instance;
+
+    private readonly List<Product> _productsList;
+    private readonly IProductReader _productReader;
+    private readonly IProductWriter _productWriter;
+    private readonly IProductPrint _productPrint;
+
     private Inventory()
     {
-        _productsFilePersistence = new ProductsFilePersistence();
-        _productsList = _productsFilePersistence.GetProducts();    
-        _productsPrint=new PrintProducts();
+        _productReader =  ProductPersistenceFactory.CreateReader();
+        _productWriter =  ProductPersistenceFactory.CreateWriter();
+        _productPrint = new PrintProducts();
+        _productsList = _productReader.GetProducts();
     }
 
-    public static Inventory? GetInstance()
+    public static Inventory GetInstance()
     {
-        lock (Lock)
+        lock (_lock)
         {
-            _products ??= new Inventory();
+            return _instance ??= new Inventory();
         }
-
-        return _products;
     }
 
-    public bool AddProduct(string? productName, int productQuantity, int productPrice)
+    public bool AddProduct(string name, int quantity, int price)
     {
-        var product = new Product(productName, productQuantity, productPrice);
-        if (!_productsFilePersistence.AddProduct(product)) return false;
+        var product = new Product(name, quantity, price);
+
+        if (!_productWriter.AddProduct(product)) return false;
+
         _productsList.Add(product);
         return true;
-
     }
 
-    public void Print(List<Product?>? products = null)
+    public bool EditProduct(string oldName, string newName, int quantity, int price)
     {
-        if (products != null)
-        {
-            _productsPrint.Print(products);
-        }
-        _productsPrint.Print(_productsList);
-    }
+        var updatedProduct = new Product(newName, quantity, price);
 
-    public bool EditProduct(string? productName,string? newProductName, int productQuantity, int productPrice)
-    {
-        if (_productsFilePersistence.EditProduct(new Product(productName, productQuantity, productPrice),newProductName))
+        if (!_productWriter.EditProduct(oldName, updatedProduct)) return false;
+
+        var product = _productsList.FirstOrDefault(p => p.Name == oldName);
+        if (product != null)
         {
-            _productsList
-                .Where(p => p?.Name == productName)
-                .ToList()
-                .ForEach(p =>
-                {
-                    p.Name = newProductName;
-                    p.Quantity = productQuantity;
-                    p.Price = productPrice;
-                });
-            return true;
+            product.Name = newName;
+            product.Quantity = quantity;
+            product.Price = price;
         }
 
         return true;
@@ -209,26 +193,28 @@ public class Inventory
 
     public bool DeleteProduct(string productName)
     {
-        if (_productsFilePersistence.DeleteProduct(productName))
-        {
-            Product product = _productsList.FirstOrDefault(p => p?.Name == productName);
-            _productsList.Remove(product);
-            return true;
-        }
+        if (!_productWriter.DeleteProduct(productName)) return false;
 
-        return false;
+        _productsList.RemoveAll(p => p.Name == productName);
+        return true;
+    }
+
+    public void Print()
+    {
+        _productPrint.Print(_productsList);
     }
 
     public void Search(string searchTerm)
     {
-        var products = _productsList.FirstOrDefault(p=>p.Name.Contains(searchTerm));
-        if (products != null)
+        var product = _productsList.FirstOrDefault(p => p.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+
+        if (product != null)
         {
-            Console.WriteLine($"Product name:{products.Name}, Quantity:{products.Quantity}, Price:{products.Price}");
-            return;
+            Console.WriteLine($"Product found: {product.Name}, Quantity: {product.Quantity}, Price: {product.Price}");
         }
-
-        Console.WriteLine("Product not found");
+        else
+        {
+            Console.WriteLine("Product not found.");
+        }
     }
-
 }

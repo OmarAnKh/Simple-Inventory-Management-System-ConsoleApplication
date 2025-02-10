@@ -34,7 +34,6 @@ namespace SimpleInventoryManagementSystem
                 switch (operation)
                 {
                     case 1:
-                        // Adding a new product
                         Console.Write("Enter the product name: ");
                         string? addProductName = Console.ReadLine();
                         Console.Write("Enter the product quantity: ");
@@ -44,11 +43,9 @@ namespace SimpleInventoryManagementSystem
                         inventory.AddProduct(addProductName, addProductQuantity, addProductPrice);
                         break;
                     case 2:
-                        // Displaying all products
                         inventory.Print();
                         break;
                     case 3:
-                        // Updating an existing product
                         Console.Write("Enter the product name to update: ");
                         string? updateProductName = Console.ReadLine();
                         Console.Write("Enter the new product name: ");
@@ -60,13 +57,11 @@ namespace SimpleInventoryManagementSystem
                         inventory.EditProduct(updateProductName, newProductName, updateProductQuantity, updateProductPrice);
                         break;
                     case 4:
-                        // Deleting a product
                         Console.Write("Enter the product name to delete: ");
                         string deleteProductName = Console.ReadLine();
                         inventory.DeleteProduct(deleteProductName);
                         break;
                     case 5:
-                        // Searching for a product
                         Console.Write("Enter the product name to search for: ");
                         string searchTerm = Console.ReadLine();
                         inventory.Search(searchTerm);
