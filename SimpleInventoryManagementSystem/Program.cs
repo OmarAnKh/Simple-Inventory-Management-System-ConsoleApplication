@@ -1,70 +1,52 @@
-﻿using System;
-using SimpleInventoryManagementSystem.models;
+﻿using SimpleInventoryManagementSystem.models;
 
 namespace SimpleInventoryManagementSystem
 {
-    static class Program
+    internal static class Program
     {
-        static int operation = 0;
+        private static int _operation;
 
-        static void PrintMenu()
+        private static void PrintMenu()
         {
             do
             {
                 Console.WriteLine("What is the operation you want to do?");
                 Console.WriteLine("1 for Adding a new product to the inventory");
-                Console.WriteLine("2 for Displaying all products");
+                Console.WriteLine("2 for Deleting a product");
                 Console.WriteLine("3 for Updating a product");
-                Console.WriteLine("4 for Deleting a product");
+                Console.WriteLine("4 for Displaying all products");
                 Console.WriteLine("5 for Searching for a product");
                 Console.WriteLine("0 for Exiting the program");
                 Console.Write("Enter your choice: ");
-                int.TryParse(Console.ReadLine(), out operation);
-            } while (operation > 5 || operation < 0);
+                int.TryParse(Console.ReadLine(), out _operation);
+            } while (_operation is > 5 or < 0);
         }
 
         private static void Main()
         {
-            Inventory? inventory = Inventory.GetInstance();
+            var inventory = Inventory.GetInstance();
 
             do
             {
                 PrintMenu();
 
-                switch (operation)
+                switch (_operation)
                 {
-                    case 1:
-                        Console.Write("Enter the product name: ");
-                        string? addProductName = Console.ReadLine();
-                        Console.Write("Enter the product quantity: ");
-                        int addProductQuantity = int.Parse(Console.ReadLine() ?? string.Empty);
-                        Console.Write("Enter the product price: ");
-                        int addProductPrice = int.Parse(Console.ReadLine());
-                        inventory.AddProduct(addProductName, addProductQuantity, addProductPrice);
+                    case (int)OperationName.AddProduct:
+                        AddNewProduct(inventory);
                         break;
-                    case 2:
+                    case (int)OperationName.DeleteProduct:
+                        DeleteAProduct(inventory);
+                        
+                        break;
+                    case (int)OperationName.UpdateProduct:
+                        UpdateProduct(inventory);
+                        break;
+                    case (int)OperationName.DisplayProducts:
                         inventory.Print();
                         break;
-                    case 3:
-                        Console.Write("Enter the product name to update: ");
-                        string? updateProductName = Console.ReadLine();
-                        Console.Write("Enter the new product name: ");
-                        string? newProductName = Console.ReadLine();
-                        Console.Write("Enter the new product quantity: ");
-                        int updateProductQuantity = int.Parse(Console.ReadLine());
-                        Console.Write("Enter the new product price: ");
-                        int updateProductPrice = int.Parse(Console.ReadLine());
-                        inventory.EditProduct(updateProductName, newProductName, updateProductQuantity, updateProductPrice);
-                        break;
-                    case 4:
-                        Console.Write("Enter the product name to delete: ");
-                        string deleteProductName = Console.ReadLine();
-                        inventory.DeleteProduct(deleteProductName);
-                        break;
-                    case 5:
-                        Console.Write("Enter the product name to search for: ");
-                        string searchTerm = Console.ReadLine();
-                        inventory.Search(searchTerm);
+                    case (int)OperationName.SearchProduct:
+                        SearchForAProduct(inventory);
                         break;
                     case 0:
                         Console.WriteLine("Exiting the program...");
@@ -76,7 +58,52 @@ namespace SimpleInventoryManagementSystem
 
                 Console.WriteLine("----------------------------------------------------------------------------------------------------------------------");
 
-            } while (operation != 0);
+            } while (_operation != 0);
+        }
+
+        private static void SearchForAProduct(Inventory inventory)
+        {
+            Console.Write("Enter the product name to search for: ");
+            var searchTerm = Console.ReadLine();
+            inventory.Search(searchTerm);
+        }
+
+        private static void DeleteAProduct(Inventory inventory)
+        {
+            Console.Write("Enter the product name to delete: ");
+            var deleteProductName = Console.ReadLine();
+            if (!inventory.DeleteProduct(deleteProductName))
+            {
+                Console.WriteLine("Product does not exist.");
+            }
+        }
+
+        private static void UpdateProduct(Inventory inventory)
+        {
+            Console.Write("Enter the product name to update: ");
+            var updateProductName = Console.ReadLine();
+            Console.Write("Enter the new product name: ");
+            var newProductName = Console.ReadLine();
+            Console.Write("Enter the new product quantity: ");
+            var updateProductQuantity = int.Parse(Console.ReadLine() ?? string.Empty);
+            Console.Write("Enter the new product price: ");
+            var updateProductPrice = int.Parse(Console.ReadLine() ?? string.Empty);
+            if (!inventory.EditProduct(updateProductName, newProductName, updateProductQuantity, updateProductPrice))
+            {
+                Console.WriteLine("Product does not exist.");
+            }
+            
+        }
+
+        private static void AddNewProduct(Inventory inventory)
+        {
+            Console.Write("Enter the product name: ");
+            var addProductName = Console.ReadLine();
+            Console.Write("Enter the product quantity: ");
+            var addProductQuantity = int.Parse(Console.ReadLine() ?? string.Empty);
+            Console.Write("Enter the product price: ");
+            var addProductPrice = int.Parse(Console.ReadLine() ?? string.Empty);
+            inventory.AddProduct(addProductName, addProductQuantity, addProductPrice);
         }
     }
 }

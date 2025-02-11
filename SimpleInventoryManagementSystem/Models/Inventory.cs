@@ -1,22 +1,23 @@
+using System.Reflection;
 using SimpleInventoryManagementSystem.Attributes;
 
 namespace SimpleInventoryManagementSystem.models;
+
 public class Inventory
 {
     private static readonly Lock Lock = new Lock();
     private static Inventory? _instance;
 
     private readonly List<Product> _productsList;
-    private readonly IProductReader _productReader;
     private readonly IProductWriter _productWriter;
     private readonly IProductPrint _productPrint;
 
     private Inventory()
     {
-        _productReader =  ProductPersistenceFactory.CreateReader();
-        _productWriter =  ProductPersistenceFactory.CreateWriter();
+        var productReader = ProductPersistenceFactory.CreateReader();
+        _productWriter = ProductPersistenceFactory.CreateWriter();
         _productPrint = new PrintProducts();
-        _productsList = _productReader.GetProducts();
+        _productsList = productReader.GetProducts();
     }
 
     public static Inventory GetInstance()
@@ -27,24 +28,24 @@ public class Inventory
         }
     }
 
-    public bool AddProduct(string name, int quantity, int price)
+    public bool AddProduct(string? name, int quantity, int price)
     {
         var product = new Product(name, quantity, price);
         if (!ProductValidator(product))
         {
             return false;
         }
+
         if (!_productWriter.AddProduct(product))
         {
             return false;
         }
+
         _productsList.Add(product);
         return true;
-
-
     }
 
-    public bool EditProduct(string oldName, string newName, int quantity, int price)
+    public bool EditProduct(string? oldName, string? newName, int quantity, int price)
     {
         var updatedProduct = new Product(newName, quantity, price);
 
@@ -54,17 +55,16 @@ public class Inventory
         }
 
         var product = _productsList.FirstOrDefault(p => p.Name == oldName);
-        if (product != null)
-        {
-            product.Name = newName;
-            product.Quantity = quantity;
-            product.Price = price;
-        }
+        if (product == null) return true;
+
+        product.Name = newName;
+        product.Quantity = quantity;
+        product.Price = price;
 
         return true;
     }
 
-    public bool DeleteProduct(string productName)
+    public bool DeleteProduct(string? productName)
     {
         if (!_productWriter.DeleteProduct(productName))
         {
@@ -80,48 +80,48 @@ public class Inventory
         _productPrint.Print(_productsList);
     }
 
-    public void Search(string searchTerm)
+    public void Search(string? searchTerm)
     {
-        var product = _productsList.FirstOrDefault(p => p.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+        var product =
+            _productsList.FirstOrDefault(p => p.Name != null && p.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
 
-        if (product != null)
-        {
-            Console.WriteLine($"Product found: {product.Name}, Quantity: {product.Quantity}, Price: {product.Price}");
-        }
-        else
-        {
-            Console.WriteLine("Product not found.");
-        }
+        Console.WriteLine(product != null
+            ? $"Product found: {product.Name}, Quantity: {product.Quantity}, Price: {product.Price}"
+            : "Product not found.");
     }
 
-    private bool ProductValidator(Product product)
+    private static bool ProductValidator(Product product)
     {
         var type = product.GetType();
         var properties = type.GetProperties();
         foreach (var property in properties)
         {
-            var priceValidatorAttribute=(PriceValidationAttribute)Attribute.GetCustomAttribute(property, typeof(PriceValidationAttribute))!;
-            if(priceValidatorAttribute != null)
-            {
-                var value = property.GetValue(product);
-                if (value is decimal and < 0)
-                {
-                    Console.WriteLine(priceValidatorAttribute.Message);
-                    return false;
-                }
-            }
-            
-            var quantityValidatorAttribute = (QuantityValidationAttribute)Attribute.GetCustomAttribute(property, typeof(QuantityValidationAttribute))!;
-            if (quantityValidatorAttribute != null)
-            {
-                var value = property.GetValue(product);
-                if (value is int and <= 0)
-                {
-                    Console.WriteLine(quantityValidatorAttribute.Message);
-                    return false;
-                }
-            }
+            if (!ValidatePrice(product, property)) return false;
+
+            if (!ValidateQuantity(product, property)) return false;
         }
+
         return true;
+    }
+
+    private static bool ValidateQuantity(Product product, PropertyInfo property)
+    {
+        var quantityValidatorAttribute =
+            (QuantityValidationAttribute)
+            Attribute.GetCustomAttribute(property, typeof(QuantityValidationAttribute))!;
+            var value = property.GetValue(product);
+            if (value is not (int and <= 0)) return true;
+            Console.WriteLine(quantityValidatorAttribute.Message);
+            return false;
+    }
+
+    private static bool ValidatePrice(Product product, PropertyInfo property)
+    {
+        var priceValidatorAttribute =
+            (PriceValidationAttribute)Attribute.GetCustomAttribute(property, typeof(PriceValidationAttribute))!;
+            var value = property.GetValue(product);
+            if (value is not (decimal and < 0)) return true;
+            Console.WriteLine(priceValidatorAttribute.Message);
+            return false;
     }
 }

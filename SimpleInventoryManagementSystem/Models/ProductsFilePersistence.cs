@@ -2,19 +2,16 @@ namespace SimpleInventoryManagementSystem.models;
 
 public class ProductsFilePersistence : IProductReader, IProductWriter
 {
-    private readonly string _filePath = "../../../Data/products.txt";
+    private const string FilePath = "../../../Data/products.txt";
 
     public List<Product> GetProducts()
     {
-        List<Product> products = new List<Product>();
+        var products = new List<Product>();
 
         try
         {
-            foreach (var line in File.ReadAllLines(_filePath))
-            {
-                var data = line.Split(",");
-                products.Add(new Product(data[0], int.Parse(data[1]), int.Parse(data[2])));
-            }
+            products.AddRange(File.ReadAllLines(FilePath).Select(line => line.Split(","))
+                .Select(data => new Product(data[0], int.Parse(data[1]), int.Parse(data[2]))));
         }
         catch (Exception e)
         {
@@ -28,7 +25,7 @@ public class ProductsFilePersistence : IProductReader, IProductWriter
     {
         try
         {
-            File.AppendAllText(_filePath, $"{product.Name},{product.Quantity},{product.Price}\n");
+            File.AppendAllText(FilePath, $"{product.Name},{product.Quantity},{product.Price}\n");
             return true;
         }
         catch (Exception e)
@@ -38,32 +35,30 @@ public class ProductsFilePersistence : IProductReader, IProductWriter
         }
     }
 
-    public bool EditProduct(string oldProductName, Product updatedProduct)
+    public bool EditProduct(string? oldProductName, Product updatedProduct)
     {
         try
         {
-            var lines = File.ReadAllLines(_filePath).ToList();
-            bool updated = false;
+            var lines = File.ReadAllLines(FilePath).ToList();
+            var updated = false;
 
-            for (int i = 0; i < lines.Count; i++)
+            for (var i = 0; i < lines.Count; i++)
             {
                 var data = lines[i].Split(",");
 
-                if (data[0] == oldProductName)
+                if (data[0] != oldProductName)
                 {
-                    lines[i] = $"{updatedProduct.Name},{updatedProduct.Quantity},{updatedProduct.Price}";
-                    updated = true;
-                    break;
+                    continue;
                 }
+
+                lines[i] = $"{updatedProduct.Name},{updatedProduct.Quantity},{updatedProduct.Price}";
+                updated = true;
+                break;
             }
 
-            if (updated)
-            {
-                File.WriteAllLines(_filePath, lines);
-                return true;
-            }
-
-            return false;
+            if (!updated) return false;
+            File.WriteAllLines(FilePath, lines);
+            return true;
         }
         catch (Exception e)
         {
@@ -72,11 +67,11 @@ public class ProductsFilePersistence : IProductReader, IProductWriter
         }
     }
 
-    public bool DeleteProduct(string productName)
+    public bool DeleteProduct(string? productName)
     {
         try
         {
-            var lines = File.ReadAllLines(_filePath).ToList();
+            var lines = File.ReadAllLines(FilePath).ToList();
             var newLines = lines.Where(line => !line.StartsWith(productName + ",")).ToList();
 
             if (lines.Count == newLines.Count)
@@ -84,7 +79,7 @@ public class ProductsFilePersistence : IProductReader, IProductWriter
                 return false;
             }
 
-            File.WriteAllLines(_filePath, newLines);
+            File.WriteAllLines(FilePath, newLines);
             return true;
         }
         catch (Exception e)

@@ -1,2 +1,2 @@
 chips,20,5
-cack,10,5
+Crepe,10,20
