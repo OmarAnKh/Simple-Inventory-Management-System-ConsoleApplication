@@ -40,23 +40,11 @@ public class ProductsFilePersistence : IProductReader, IProductWriter
         try
         {
             var lines = File.ReadAllLines(FilePath).ToList();
-            var updated = false;
 
-            for (var i = 0; i < lines.Count; i++)
+            if (!SearchForProductAndUpdateIt(oldProductName, updatedProduct, lines))
             {
-                var data = lines[i].Split(",");
-
-                if (data[0] != oldProductName)
-                {
-                    continue;
-                }
-
-                lines[i] = $"{updatedProduct.Name},{updatedProduct.Quantity},{updatedProduct.Price}";
-                updated = true;
-                break;
+                return false;
             }
-
-            if (!updated) return false;
             File.WriteAllLines(FilePath, lines);
             return true;
         }
@@ -67,25 +55,49 @@ public class ProductsFilePersistence : IProductReader, IProductWriter
         }
     }
 
+    private static bool SearchForProductAndUpdateIt(string? oldProductName, Product updatedProduct, List<string> lines)
+    {
+        for (var index = 0; index < lines.Count; index++)
+        {
+            if (SplitProductLine(oldProductName, lines[index])) continue;
+
+            lines[index] = $"{updatedProduct.Name},{updatedProduct.Quantity},{updatedProduct.Price}";
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool SplitProductLine(string? oldProductName, String lines)
+    {
+        var data = lines.Split(",");
+
+        return data[0] != oldProductName;
+    }
+
     public bool DeleteProduct(string? productName)
     {
         try
         {
-            var lines = File.ReadAllLines(FilePath).ToList();
-            var newLines = lines.Where(line => !line.StartsWith(productName + ",")).ToList();
-
-            if (lines.Count == newLines.Count)
-            {
-                return false;
-            }
-
-            File.WriteAllLines(FilePath, newLines);
-            return true;
+            return RemoveProductFromFileList(productName);
         }
         catch (Exception e)
         {
-            Console.WriteLine($"Error deleting product: {e.Message}");
+            throw new Exception($"Error deleting product: {e.Message}");
+        }
+    }
+
+    private static bool RemoveProductFromFileList(string? productName)
+    {
+        var lines = File.ReadAllLines(FilePath).ToList();
+        var newLines = lines.Where(line => !line.StartsWith(productName + ",")).ToList();
+
+        if (lines.Count == newLines.Count)
+        {
             return false;
         }
+
+        File.WriteAllLines(FilePath, newLines);
+        return true;
     }
 }

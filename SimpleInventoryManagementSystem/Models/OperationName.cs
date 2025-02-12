@@ -2,10 +2,11 @@ namespace SimpleInventoryManagementSystem.models;
 
 public enum OperationName
 {
-    AddProduct = 1 ,
+    Exit,
+    AddProduct,
     DeleteProduct ,
     UpdateProduct,
     DisplayProducts,
     SearchProduct
-    ,
+    
 }

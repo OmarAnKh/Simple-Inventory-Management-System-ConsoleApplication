@@ -37,7 +37,6 @@ namespace SimpleInventoryManagementSystem
                         break;
                     case (int)OperationName.DeleteProduct:
                         DeleteAProduct(inventory);
-                        
                         break;
                     case (int)OperationName.UpdateProduct:
                         UpdateProduct(inventory);
@@ -48,7 +47,7 @@ namespace SimpleInventoryManagementSystem
                     case (int)OperationName.SearchProduct:
                         SearchForAProduct(inventory);
                         break;
-                    case 0:
+                    case (int)OperationName.Exit:
                         Console.WriteLine("Exiting the program...");
                         break;
                     default:

@@ -83,7 +83,8 @@ public class Inventory
     public void Search(string? searchTerm)
     {
         var product =
-            _productsList.FirstOrDefault(p => p.Name != null && p.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+            _productsList.FirstOrDefault(p =>
+                p.Name != null && p.Name.Contains(searchTerm ?? string.Empty, StringComparison.OrdinalIgnoreCase));
 
         Console.WriteLine(product != null
             ? $"Product found: {product.Name}, Quantity: {product.Quantity}, Price: {product.Price}"
@@ -96,32 +97,37 @@ public class Inventory
         var properties = type.GetProperties();
         foreach (var property in properties)
         {
-            if (!ValidatePrice(product, property)) return false;
+            if (!IsPriceValid(product, property))
+            {
+                return false;
+            }
 
-            if (!ValidateQuantity(product, property)) return false;
+            if (!IsQuantityValid(product, property))
+            {
+                return false;
+            }
         }
 
         return true;
     }
 
-    private static bool ValidateQuantity(Product product, PropertyInfo property)
+    private static bool IsQuantityValid(Product product, PropertyInfo property)
     {
         var quantityValidatorAttribute =
-            (QuantityValidationAttribute)
-            Attribute.GetCustomAttribute(property, typeof(QuantityValidationAttribute))!;
-            var value = property.GetValue(product);
-            if (value is not (int and <= 0)) return true;
-            Console.WriteLine(quantityValidatorAttribute.Message);
-            return false;
+            (QuantityValidationAttribute)Attribute.GetCustomAttribute(property, typeof(QuantityValidationAttribute))!;
+        var value = property.GetValue(product);
+        if (value is not <= 0) return true;
+        Console.WriteLine(quantityValidatorAttribute.Message);
+        return false;
     }
 
-    private static bool ValidatePrice(Product product, PropertyInfo property)
+    private static bool IsPriceValid(Product product, PropertyInfo property)
     {
         var priceValidatorAttribute =
             (PriceValidationAttribute)Attribute.GetCustomAttribute(property, typeof(PriceValidationAttribute))!;
-            var value = property.GetValue(product);
-            if (value is not (decimal and < 0)) return true;
-            Console.WriteLine(priceValidatorAttribute.Message);
-            return false;
+        var value = property.GetValue(product);
+        if (value is not (decimal and < 0)) return true;
+        Console.WriteLine(priceValidatorAttribute.Message);
+        return false;
     }
 }
