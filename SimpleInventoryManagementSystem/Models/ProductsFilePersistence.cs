@@ -15,7 +15,7 @@ public class ProductsFilePersistence : IProductReader, IProductWriter
         }
         catch (Exception e)
         {
-            Console.WriteLine($"Error reading products: {e.Message}");
+            throw new Exception($"Error reading products: {e.Message}");
         }
 
         return products;

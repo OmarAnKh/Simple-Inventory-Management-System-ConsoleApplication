@@ -31,7 +31,7 @@ public class Inventory
     public bool AddProduct(string? name, int quantity, int price)
     {
         var product = new Product(name, quantity, price);
-        if (!ProductValidator(product))
+        if (!IsProductValid(product))
         {
             return false;
         }
@@ -91,7 +91,7 @@ public class Inventory
             : "Product not found.");
     }
 
-    private static bool ProductValidator(Product product)
+    private static bool IsProductValid(Product product)
     {
         var type = product.GetType();
         var properties = type.GetProperties();
