@@ -18,7 +18,12 @@ namespace SimpleInventoryManagementSystem
                 Console.WriteLine("5 for Searching for a product");
                 Console.WriteLine("0 for Exiting the program");
                 Console.Write("Enter your choice: ");
-                int.TryParse(Console.ReadLine(), out _operation);
+                if (int.TryParse(Console.ReadLine(), out _operation))
+                {
+                    continue;
+                }
+                _operation = -1;
+                Console.WriteLine("Invalid input!");
             } while (_operation is > 5 or < 0);
         }
 
