@@ -1,6 +1,6 @@
 namespace SimpleInventoryManagementSystem.Models.Repositories.Interfaces;
 
-public class IProductPersistence
+
+public interface IProductPersistence : IProductReader, IProductWriter
 {
-    
 }

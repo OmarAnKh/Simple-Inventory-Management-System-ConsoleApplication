@@ -1,8 +1,10 @@
-namespace SimpleInventoryManagementSystem.models;
+using SimpleInventoryManagementSystem.models;
+
+namespace SimpleInventoryManagementSystem.Models.Repositories.Interfaces;
 
 public interface IProductWriter
 {
-    bool AddProduct(Product product);
-    bool EditProduct(string? oldProductName, Product updatedProduct);
-    bool DeleteProduct(string? productName);
+    Task<bool> AddProductAsync(Product product);
+    Task<bool> EditProductAsync(string? oldProductName, Product updatedProduct);
+    Task<bool> DeleteProductAsync(string? productName);
 }

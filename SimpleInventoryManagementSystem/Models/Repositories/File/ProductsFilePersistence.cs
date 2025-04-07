@@ -1,16 +1,20 @@
-namespace SimpleInventoryManagementSystem.models;
+using SimpleInventoryManagementSystem.models;
+using SimpleInventoryManagementSystem.Models.Repositories.Interfaces;
 
-public class ProductsFilePersistence : IProductReader, IProductWriter
+namespace SimpleInventoryManagementSystem.Models.Repositories.File;
+
+public class ProductsFilePersistence : IProductPersistence
 {
     private const string FilePath = "../../../Data/products.txt";
 
-    public List<Product> GetProducts()
+    public async Task<List<Product>> GetProductsAsync()
     {
         var products = new List<Product>();
 
         try
         {
-            products.AddRange(File.ReadAllLines(FilePath).Select(line => line.Split(","))
+            var lines = await System.IO.File.ReadAllLinesAsync(FilePath);
+            products.AddRange(lines.Select(line => line.Split(","))
                 .Select(data => new Product(data[0], int.Parse(data[1]), int.Parse(data[2]))));
         }
         catch (Exception e)
@@ -21,11 +25,12 @@ public class ProductsFilePersistence : IProductReader, IProductWriter
         return products;
     }
 
-    public bool AddProduct(Product product)
+    public async Task<bool> AddProductAsync(Product product)
     {
         try
         {
-            File.AppendAllText(FilePath, $"{product.Name},{product.Quantity},{product.Price}\n");
+            var line = $"{product.Name},{product.Quantity},{product.Price}\n";
+            await System.IO.File.AppendAllTextAsync(FilePath, line);
             return true;
         }
         catch (Exception e)
@@ -35,23 +40,45 @@ public class ProductsFilePersistence : IProductReader, IProductWriter
         }
     }
 
-    public bool EditProduct(string? oldProductName, Product updatedProduct)
+    public async Task<bool> EditProductAsync(string? oldProductName, Product updatedProduct)
     {
         try
         {
-            var lines = File.ReadAllLines(FilePath).ToList();
+            var lines = (await System.IO.File.ReadAllLinesAsync(FilePath)).ToList();
 
             if (!SearchForProductAndUpdateIt(oldProductName, updatedProduct, lines))
             {
                 return false;
             }
-            File.WriteAllLines(FilePath, lines);
+
+            await System.IO.File.WriteAllLinesAsync(FilePath, lines);
             return true;
         }
         catch (Exception e)
         {
             Console.WriteLine($"Error editing product: {e.Message}");
             return false;
+        }
+    }
+
+    public async Task<bool> DeleteProductAsync(string? productName)
+    {
+        try
+        {
+            var lines = (await System.IO.File.ReadAllLinesAsync(FilePath)).ToList();
+            var newLines = lines.Where(line => !line.StartsWith(productName + ",")).ToList();
+
+            if (lines.Count == newLines.Count)
+            {
+                return false;
+            }
+
+            await System.IO.File.WriteAllLinesAsync(FilePath, newLines);
+            return true;
+        }
+        catch (Exception e)
+        {
+            throw new Exception($"Error deleting product: {e.Message}");
         }
     }
 
@@ -68,36 +95,9 @@ public class ProductsFilePersistence : IProductReader, IProductWriter
         return false;
     }
 
-    private static bool SplitProductLine(string? oldProductName, String lines)
+    private static bool SplitProductLine(string? oldProductName, string line)
     {
-        var data = lines.Split(",");
-
+        var data = line.Split(",");
         return data[0] != oldProductName;
-    }
-
-    public bool DeleteProduct(string? productName)
-    {
-        try
-        {
-            return RemoveProductFromFileList(productName);
-        }
-        catch (Exception e)
-        {
-            throw new Exception($"Error deleting product: {e.Message}");
-        }
-    }
-
-    private static bool RemoveProductFromFileList(string? productName)
-    {
-        var lines = File.ReadAllLines(FilePath).ToList();
-        var newLines = lines.Where(line => !line.StartsWith(productName + ",")).ToList();
-
-        if (lines.Count == newLines.Count)
-        {
-            return false;
-        }
-
-        File.WriteAllLines(FilePath, newLines);
-        return true;
     }
 }

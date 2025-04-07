@@ -1,6 +1,8 @@
-namespace SimpleInventoryManagementSystem.models;
+using SimpleInventoryManagementSystem.models;
+
+namespace SimpleInventoryManagementSystem.Models.Repositories.Interfaces;
 
 public interface IProductReader
 {
-    List<Product> GetProducts();
+    Task<List<Product>> GetProductsAsync();
 }
