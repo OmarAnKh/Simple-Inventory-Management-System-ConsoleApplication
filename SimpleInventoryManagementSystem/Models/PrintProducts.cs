@@ -1,6 +1,6 @@
 namespace SimpleInventoryManagementSystem.models;
 
-public class PrintProducts : IProductPrint
+class PrintProducts : IProductPrint
 {
     public void Print(List<Product> products)
     {

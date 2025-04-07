@@ -1,9 +1,8 @@
-using System.Reflection;
-using SimpleInventoryManagementSystem.Attributes;
+using System.ComponentModel.DataAnnotations;
 
 namespace SimpleInventoryManagementSystem.models;
 
-public class Inventory
+class Inventory
 {
     private static readonly Lock Lock = new Lock();
     private static Inventory? _instance;
@@ -93,41 +92,20 @@ public class Inventory
 
     private static bool IsProductValid(Product product)
     {
-        var type = product.GetType();
-        var properties = type.GetProperties();
-        foreach (var property in properties)
-        {
-            if (!IsPriceValid(product, property))
-            {
-                return false;
-            }
+        var context = new ValidationContext(product, null, null);
+        var results = new List<ValidationResult>();
 
-            if (!IsQuantityValid(product, property))
+        bool isValid = Validator.TryValidateObject(product, context, results, true);
+
+
+        if (!isValid)
+        {
+            foreach (ValidationResult result in results)
             {
-                return false;
+                Console.WriteLine(result.ErrorMessage);
             }
         }
 
-        return true;
-    }
-
-    private static bool IsQuantityValid(Product product, PropertyInfo property)
-    {
-        var quantityValidatorAttribute =
-            (QuantityValidationAttribute)Attribute.GetCustomAttribute(property, typeof(QuantityValidationAttribute))!;
-        var value = property.GetValue(product);
-        if (value is not <= 0) return true;
-        Console.WriteLine(quantityValidatorAttribute.Message);
-        return false;
-    }
-
-    private static bool IsPriceValid(Product product, PropertyInfo property)
-    {
-        var priceValidatorAttribute =
-            (PriceValidationAttribute)Attribute.GetCustomAttribute(property, typeof(PriceValidationAttribute))!;
-        var value = property.GetValue(product);
-        if (value is not (decimal and < 0)) return true;
-        Console.WriteLine(priceValidatorAttribute.Message);
-        return false;
+        return isValid;
     }
 }

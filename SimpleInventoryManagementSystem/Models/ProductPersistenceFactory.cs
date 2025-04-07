@@ -1,6 +1,6 @@
 namespace SimpleInventoryManagementSystem.models;
 
-public static class ProductPersistenceFactory
+static class ProductPersistenceFactory
 {
     public static IProductReader CreateReader()
     {

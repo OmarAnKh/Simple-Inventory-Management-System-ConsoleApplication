@@ -1,7 +1,17 @@
-namespace SimpleInventoryManagementSystem.Attributes;
-[AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
+using System.ComponentModel.DataAnnotations;
 
-public class QuantityValidationAttribute(string message) : Attribute
+namespace SimpleInventoryManagementSystem.Attributes;
+
+[AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
+class QuantityValidationAttribute(string message) : ValidationAttribute(message)
 {
-    public string Message { get; } = message;
+    protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
+    {
+        if (value is int price && price > 0)
+        {
+            return ValidationResult.Success;
+        }
+
+        return new ValidationResult(ErrorMessage);
+    }
 }
