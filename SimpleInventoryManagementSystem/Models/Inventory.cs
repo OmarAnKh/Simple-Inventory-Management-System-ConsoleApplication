@@ -1,33 +1,47 @@
 using System.ComponentModel.DataAnnotations;
+using SimpleInventoryManagementSystem.Models.Repositories.Interfaces;
 
 namespace SimpleInventoryManagementSystem.models;
 
 class Inventory
 {
-    private static readonly Lock Lock = new Lock();
+    private static readonly SemaphoreSlim Semaphore = new SemaphoreSlim(1, 1);
     private static Inventory? _instance;
 
     private readonly List<Product> _productsList;
-    private readonly IProductWriter _productWriter;
+    private readonly IProductPersistence _productPersistence;
     private readonly IProductPrint _productPrint;
 
-    private Inventory()
+    private Inventory(IProductPersistence persistence, List<Product> products)
     {
-        var productReader = ProductPersistenceFactory.CreateReader();
-        _productWriter = ProductPersistenceFactory.CreateWriter();
+        _productPersistence = persistence;
+        _productsList = products;
         _productPrint = new PrintProducts();
-        _productsList = productReader.GetProducts();
     }
 
-    public static Inventory GetInstance()
+    public static async Task<Inventory> CreateAsync()
     {
-        lock (Lock)
+        if (_instance != null) return _instance;
+
+        await Semaphore.WaitAsync();
+        try
         {
-            return _instance ??= new Inventory();
+            if (_instance == null)
+            {
+                var persistence = ProductPersistenceFactory.CreatePersistence();
+                var products = await persistence.GetProductsAsync();
+                _instance = new Inventory(persistence, products);
+            }
         }
+        finally
+        {
+            Semaphore.Release();
+        }
+
+        return _instance;
     }
 
-    public bool AddProduct(string? name, int quantity, int price)
+    public async Task<bool> AddProductAsync(string? name, int quantity, int price)
     {
         var product = new Product(name, quantity, price);
         if (!IsProductValid(product))
@@ -35,7 +49,7 @@ class Inventory
             return false;
         }
 
-        if (!_productWriter.AddProduct(product))
+        if (!await _productPersistence.AddProductAsync(product))
         {
             return false;
         }
@@ -44,11 +58,11 @@ class Inventory
         return true;
     }
 
-    public bool EditProduct(string? oldName, string? newName, int quantity, int price)
+    public async Task<bool> EditProductAsync(string? oldName, string? newName, int quantity, int price)
     {
         var updatedProduct = new Product(newName, quantity, price);
 
-        if (!_productWriter.EditProduct(oldName, updatedProduct))
+        if (!await _productPersistence.EditProductAsync(oldName, updatedProduct))
         {
             return false;
         }
@@ -63,9 +77,9 @@ class Inventory
         return true;
     }
 
-    public bool DeleteProduct(string? productName)
+    public async Task<bool> DeleteProductAsync(string? productName)
     {
-        if (!_productWriter.DeleteProduct(productName))
+        if (!await _productPersistence.DeleteProductAsync(productName))
         {
             return false;
         }
@@ -81,9 +95,8 @@ class Inventory
 
     public void Search(string? searchTerm)
     {
-        var product =
-            _productsList.FirstOrDefault(p =>
-                p.Name != null && p.Name.Contains(searchTerm ?? string.Empty, StringComparison.OrdinalIgnoreCase));
+        var product = _productsList.FirstOrDefault(p =>
+            p.Name != null && p.Name.Contains(searchTerm ?? string.Empty, StringComparison.OrdinalIgnoreCase));
 
         Console.WriteLine(product != null
             ? $"Product found: {product.Name}, Quantity: {product.Quantity}, Price: {product.Price}"
@@ -96,7 +109,6 @@ class Inventory
         var results = new List<ValidationResult>();
 
         bool isValid = Validator.TryValidateObject(product, context, results, true);
-
 
         if (!isValid)
         {
