@@ -1,14 +1,13 @@
+using SimpleInventoryManagementSystem.Models.Repositories.File;
+using SimpleInventoryManagementSystem.Models.Repositories.Interfaces;
+using SimpleInventoryManagementSystem.models.Repositories.MongoDB;
+
 namespace SimpleInventoryManagementSystem.models;
 
 static class ProductPersistenceFactory
 {
-    public static IProductReader CreateReader()
+    public static IProductPersistence CreatePersistence()
     {
-        return new ProductsFilePersistence();
-    }
-
-    public static IProductWriter CreateWriter()
-    {
-        return new ProductsFilePersistence();
+        return new ProductsMongoDbPersistence();
     }
 }
