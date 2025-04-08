@@ -3,17 +3,15 @@ using SimpleInventoryManagementSystem.Models.Repositories.Interfaces;
 
 namespace SimpleInventoryManagementSystem.Models.Repositories.File;
 
-public class ProductsFilePersistence : IProductPersistence
+public class ProductsFilePersistence(string filePath) : IProductPersistence
 {
-    private const string FilePath = "../../../Data/products.txt";
-
     public async Task<List<Product>> GetProductsAsync()
     {
         var products = new List<Product>();
 
         try
         {
-            var lines = await System.IO.File.ReadAllLinesAsync(FilePath);
+            var lines = await System.IO.File.ReadAllLinesAsync(filePath);
             products.AddRange(lines.Select(line => line.Split(","))
                 .Select(data => new Product(data[0], int.Parse(data[1]), int.Parse(data[2]))));
         }
@@ -30,7 +28,7 @@ public class ProductsFilePersistence : IProductPersistence
         try
         {
             var line = $"{product.Name},{product.Quantity},{product.Price}\n";
-            await System.IO.File.AppendAllTextAsync(FilePath, line);
+            await System.IO.File.AppendAllTextAsync(filePath, line);
             return true;
         }
         catch (Exception e)
@@ -44,14 +42,14 @@ public class ProductsFilePersistence : IProductPersistence
     {
         try
         {
-            var lines = (await System.IO.File.ReadAllLinesAsync(FilePath)).ToList();
+            var lines = (await System.IO.File.ReadAllLinesAsync(filePath)).ToList();
 
             if (!SearchForProductAndUpdateIt(oldProductName, updatedProduct, lines))
             {
                 return false;
             }
 
-            await System.IO.File.WriteAllLinesAsync(FilePath, lines);
+            await System.IO.File.WriteAllLinesAsync(filePath, lines);
             return true;
         }
         catch (Exception e)
@@ -65,7 +63,7 @@ public class ProductsFilePersistence : IProductPersistence
     {
         try
         {
-            var lines = (await System.IO.File.ReadAllLinesAsync(FilePath)).ToList();
+            var lines = (await System.IO.File.ReadAllLinesAsync(filePath)).ToList();
             var newLines = lines.Where(line => !line.StartsWith(productName + ",")).ToList();
 
             if (lines.Count == newLines.Count)
@@ -73,7 +71,7 @@ public class ProductsFilePersistence : IProductPersistence
                 return false;
             }
 
-            await System.IO.File.WriteAllLinesAsync(FilePath, newLines);
+            await System.IO.File.WriteAllLinesAsync(filePath, newLines);
             return true;
         }
         catch (Exception e)

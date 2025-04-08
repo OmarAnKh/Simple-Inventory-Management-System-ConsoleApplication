@@ -7,8 +7,21 @@ namespace SimpleInventoryManagementSystem.models;
 
 static class ProductPersistenceFactory
 {
-    public static IProductPersistence CreatePersistence()
+    public static IProductPersistence CreatePersistence(RepositoriesType type)
     {
-        return new ProductsSqlServerPersistence();
+        if (type == RepositoriesType.MongoDb)
+        {
+            return new ProductsMongoDbPersistence(Environment.GetEnvironmentVariable("MONGODBCONNECTIONSTRING"),
+                Environment.GetEnvironmentVariable("MONGODBDATABASENAME"),
+                Environment.GetEnvironmentVariable("MONGODBCOLLECTIONNAME"));
+        }
+        else if (type == RepositoriesType.SqlServer)
+        {
+            return new ProductsSqlServerPersistence(Environment.GetEnvironmentVariable("SQLSERVERCONNECTIONSTRING"));
+        }
+        else
+        {
+            return new ProductsFilePersistence(Environment.GetEnvironmentVariable("FILECONNECTIONSTRING"));
+        }
     }
 }

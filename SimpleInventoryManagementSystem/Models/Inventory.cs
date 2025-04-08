@@ -19,7 +19,7 @@ class Inventory
         _productPrint = new PrintProducts();
     }
 
-    public static async Task<Inventory> CreateAsync()
+    public static async Task<Inventory> CreateAsync(RepositoriesType type)
     {
         if (_instance != null) return _instance;
 
@@ -28,7 +28,7 @@ class Inventory
         {
             if (_instance == null)
             {
-                var persistence = ProductPersistenceFactory.CreatePersistence();
+                var persistence = ProductPersistenceFactory.CreatePersistence(type);
                 var products = await persistence.GetProductsAsync();
                 _instance = new Inventory(persistence, products);
             }

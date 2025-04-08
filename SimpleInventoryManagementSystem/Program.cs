@@ -1,4 +1,5 @@
-﻿using SimpleInventoryManagementSystem.models;
+﻿using DotNetEnv;
+using SimpleInventoryManagementSystem.models;
 
 namespace SimpleInventoryManagementSystem
 {
@@ -22,6 +23,7 @@ namespace SimpleInventoryManagementSystem
                 {
                     continue;
                 }
+
                 _operation = -1;
                 Console.WriteLine("Invalid input!");
             } while (_operation is > 5 or < 0);
@@ -29,7 +31,10 @@ namespace SimpleInventoryManagementSystem
 
         private static async Task Main(string[] args)
         {
-            var inventory = await Inventory.CreateAsync();
+            Env.Load();
+
+
+            var inventory = await Inventory.CreateAsync(RepositoriesType.MongoDb);
 
             do
             {
@@ -60,8 +65,8 @@ namespace SimpleInventoryManagementSystem
                         break;
                 }
 
-                Console.WriteLine("----------------------------------------------------------------------------------------------------------------------");
-
+                Console.WriteLine(
+                    "----------------------------------------------------------------------------------------------------------------------");
             } while (_operation != 0);
         }
 
@@ -92,7 +97,8 @@ namespace SimpleInventoryManagementSystem
             var updateProductQuantity = int.Parse(Console.ReadLine() ?? string.Empty);
             Console.Write("Enter the new product price: ");
             var updateProductPrice = int.Parse(Console.ReadLine() ?? string.Empty);
-            if (!await inventory.EditProductAsync(updateProductName, newProductName, updateProductQuantity, updateProductPrice))
+            if (!await inventory.EditProductAsync(updateProductName, newProductName, updateProductQuantity,
+                    updateProductPrice))
             {
                 Console.WriteLine("Product does not exist.");
             }

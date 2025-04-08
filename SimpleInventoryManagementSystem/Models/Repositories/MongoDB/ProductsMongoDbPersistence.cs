@@ -7,18 +7,21 @@ public class ProductsMongoDbPersistence : IProductPersistence
 {
     private readonly IMongoCollection<Product> _productCollection;
 
-    public ProductsMongoDbPersistence()
+    public ProductsMongoDbPersistence(string connectionString, string databaseName, string collectionName)
     {
-        var client = new MongoClient("mongodb://localhost:27017");
-        var database = client.GetDatabase("SimpleInventoryManagementSystem");
-        _productCollection = database.GetCollection<Product>("Products");
+        var client = new MongoClient(connectionString); //"mongodb://localhost:27017"
+        var database = client.GetDatabase(databaseName); //"SimpleInventoryManagementSystem"
+        _productCollection = database.GetCollection<Product>(collectionName); //"Products"
     }
 
     public async Task<List<Product>> GetProductsAsync()
     {
         try
         {
-            return await _productCollection.Find(_ => true).ToListAsync();
+            return await _productCollection
+                .Find(_ => true)
+                .Project<Product>(Builders<Product>.Projection.Exclude("_id"))
+                .ToListAsync();
         }
         catch (Exception error)
         {
