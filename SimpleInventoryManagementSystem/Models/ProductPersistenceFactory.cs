@@ -11,7 +11,7 @@ static class ProductPersistenceFactory
     {
         if (type == RepositoriesType.MongoDb)
         {
-            return new ProductsMongoDbPersistence(Environment.GetEnvironmentVariable("MONGODBCONNECTIONSTRING"),
+            return new ProductMongoDbPersistence(Environment.GetEnvironmentVariable("MONGODBCONNECTIONSTRING"),
                 Environment.GetEnvironmentVariable("MONGODBDATABASENAME"),
                 Environment.GetEnvironmentVariable("MONGODBCOLLECTIONNAME"));
         }

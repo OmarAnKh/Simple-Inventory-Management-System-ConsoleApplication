@@ -43,13 +43,13 @@ namespace SimpleInventoryManagementSystem
                 switch (_operation)
                 {
                     case (int)OperationName.AddProduct:
-                        await AddNewProduct(inventory);
+                        await AddNewProductAsync(inventory);
                         break;
                     case (int)OperationName.DeleteProduct:
-                        await DeleteAProduct(inventory);
+                        await DeleteProductAsync(inventory);
                         break;
                     case (int)OperationName.UpdateProduct:
-                        await UpdateProduct(inventory);
+                        await UpdateProductAsync(inventory);
                         break;
                     case (int)OperationName.DisplayProducts:
                         inventory.Print();
@@ -77,7 +77,7 @@ namespace SimpleInventoryManagementSystem
             inventory.Search(searchTerm);
         }
 
-        private static async Task DeleteAProduct(Inventory inventory)
+        private static async Task DeleteProductAsync(Inventory inventory)
         {
             Console.Write("Enter the product name to delete: ");
             var deleteProductName = Console.ReadLine();
@@ -87,7 +87,7 @@ namespace SimpleInventoryManagementSystem
             }
         }
 
-        private static async Task UpdateProduct(Inventory inventory)
+        private static async Task UpdateProductAsync(Inventory inventory)
         {
             Console.Write("Enter the product name to update: ");
             var updateProductName = Console.ReadLine();
@@ -104,7 +104,7 @@ namespace SimpleInventoryManagementSystem
             }
         }
 
-        private static async Task AddNewProduct(Inventory inventory)
+        private static async Task AddNewProductAsync(Inventory inventory)
         {
             Console.Write("Enter the product name: ");
             var addProductName = Console.ReadLine();

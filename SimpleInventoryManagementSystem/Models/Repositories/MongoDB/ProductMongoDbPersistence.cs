@@ -3,11 +3,11 @@ using SimpleInventoryManagementSystem.Models.Repositories.Interfaces;
 
 namespace SimpleInventoryManagementSystem.models.Repositories.MongoDB;
 
-public class ProductsMongoDbPersistence : IProductPersistence
+public class ProductMongoDbPersistence : IProductPersistence
 {
     private readonly IMongoCollection<Product> _productCollection;
 
-    public ProductsMongoDbPersistence(string connectionString, string databaseName, string collectionName)
+    public ProductMongoDbPersistence(string connectionString, string databaseName, string collectionName)
     {
         var client = new MongoClient(connectionString); //"mongodb://localhost:27017"
         var database = client.GetDatabase(databaseName); //"SimpleInventoryManagementSystem"

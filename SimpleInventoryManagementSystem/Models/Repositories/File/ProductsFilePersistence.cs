@@ -44,7 +44,7 @@ public class ProductsFilePersistence(string filePath) : IProductPersistence
         {
             var lines = (await System.IO.File.ReadAllLinesAsync(filePath)).ToList();
 
-            if (!SearchForProductAndUpdateIt(oldProductName, updatedProduct, lines))
+            if (!UpdateProduct(oldProductName, updatedProduct, lines))
             {
                 return false;
             }
@@ -80,7 +80,7 @@ public class ProductsFilePersistence(string filePath) : IProductPersistence
         }
     }
 
-    private static bool SearchForProductAndUpdateIt(string? oldProductName, Product updatedProduct, List<string> lines)
+    private static bool UpdateProduct(string? oldProductName, Product updatedProduct, List<string> lines)
     {
         for (var index = 0; index < lines.Count; index++)
         {
