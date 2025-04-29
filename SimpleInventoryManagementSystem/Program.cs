@@ -1,4 +1,5 @@
-﻿using SimpleInventoryManagementSystem.models;
+﻿using DotNetEnv;
+using SimpleInventoryManagementSystem.models;
 
 namespace SimpleInventoryManagementSystem
 {
@@ -22,14 +23,18 @@ namespace SimpleInventoryManagementSystem
                 {
                     continue;
                 }
+
                 _operation = -1;
                 Console.WriteLine("Invalid input!");
             } while (_operation is > 5 or < 0);
         }
 
-        private static void Main()
+        private static async Task Main(string[] args)
         {
-            var inventory = Inventory.GetInstance();
+            Env.Load();
+
+
+            var inventory = await Inventory.CreateAsync(RepositoriesType.MongoDb);
 
             do
             {
@@ -38,13 +43,13 @@ namespace SimpleInventoryManagementSystem
                 switch (_operation)
                 {
                     case (int)OperationName.AddProduct:
-                        AddNewProduct(inventory);
+                        await AddNewProductAsync(inventory);
                         break;
                     case (int)OperationName.DeleteProduct:
-                        DeleteAProduct(inventory);
+                        await DeleteProductAsync(inventory);
                         break;
                     case (int)OperationName.UpdateProduct:
-                        UpdateProduct(inventory);
+                        await UpdateProductAsync(inventory);
                         break;
                     case (int)OperationName.DisplayProducts:
                         inventory.Print();
@@ -60,8 +65,8 @@ namespace SimpleInventoryManagementSystem
                         break;
                 }
 
-                Console.WriteLine("----------------------------------------------------------------------------------------------------------------------");
-
+                Console.WriteLine(
+                    "----------------------------------------------------------------------------------------------------------------------");
             } while (_operation != 0);
         }
 
@@ -72,17 +77,17 @@ namespace SimpleInventoryManagementSystem
             inventory.Search(searchTerm);
         }
 
-        private static void DeleteAProduct(Inventory inventory)
+        private static async Task DeleteProductAsync(Inventory inventory)
         {
             Console.Write("Enter the product name to delete: ");
             var deleteProductName = Console.ReadLine();
-            if (!inventory.DeleteProduct(deleteProductName))
+            if (!await inventory.DeleteProductAsync(deleteProductName))
             {
                 Console.WriteLine("Product does not exist.");
             }
         }
 
-        private static void UpdateProduct(Inventory inventory)
+        private static async Task UpdateProductAsync(Inventory inventory)
         {
             Console.Write("Enter the product name to update: ");
             var updateProductName = Console.ReadLine();
@@ -92,14 +97,14 @@ namespace SimpleInventoryManagementSystem
             var updateProductQuantity = int.Parse(Console.ReadLine() ?? string.Empty);
             Console.Write("Enter the new product price: ");
             var updateProductPrice = int.Parse(Console.ReadLine() ?? string.Empty);
-            if (!inventory.EditProduct(updateProductName, newProductName, updateProductQuantity, updateProductPrice))
+            if (!await inventory.EditProductAsync(updateProductName, newProductName, updateProductQuantity,
+                    updateProductPrice))
             {
                 Console.WriteLine("Product does not exist.");
             }
-            
         }
 
-        private static void AddNewProduct(Inventory inventory)
+        private static async Task AddNewProductAsync(Inventory inventory)
         {
             Console.Write("Enter the product name: ");
             var addProductName = Console.ReadLine();
@@ -107,7 +112,7 @@ namespace SimpleInventoryManagementSystem
             var addProductQuantity = int.Parse(Console.ReadLine() ?? string.Empty);
             Console.Write("Enter the product price: ");
             var addProductPrice = int.Parse(Console.ReadLine() ?? string.Empty);
-            inventory.AddProduct(addProductName, addProductQuantity, addProductPrice);
+            await inventory.AddProductAsync(addProductName, addProductQuantity, addProductPrice);
         }
     }
 }
